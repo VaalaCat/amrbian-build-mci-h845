@@ -22,9 +22,20 @@ function check_loop_device_internal() {
 	local device="${1}"
 	display_alert "Checking loop device" "${device}" "debug"
 	if [[ ! -b "${device}" ]]; then
+		local dev_maj="" dev_min=""
 		if [[ $CONTAINER_COMPAT == yes && -b "/tmp/${device}" ]]; then
-			display_alert "Creating device node" "${device}"
-			run_host_command_logged mknod -m0660 "${device}" b "0x$(stat -c '%t' "/tmp/${device}")" "0x$(stat -c '%T' "/tmp/${device}")"
+			dev_maj="0x$(stat -c '%t' "/tmp/${device}")"
+			dev_min="0x$(stat -c '%T' "/tmp/${device}")"
+		elif [[ $CONTAINER_COMPAT == yes && "${device}" =~ ^/dev/loop[0-9]+(p[0-9]+)?$ && -r "/sys/class/block/${device##*/}/dev" ]]; then
+			local dev_maj_min
+			dev_maj_min="$(< "/sys/class/block/${device##*/}/dev")"
+			dev_maj="${dev_maj_min%%:*}"
+			dev_min="${dev_maj_min##*:}"
+		fi
+
+		if [[ -n "${dev_maj}" && -n "${dev_min}" ]]; then
+			display_alert "Creating device node" "${device} (${dev_maj}:${dev_min})"
+			run_host_command_logged mknod -m0660 "${device}" b "${dev_maj}" "${dev_min}"
 			if [[ ! -b "${device}" ]]; then # try again after creating node
 				return 1                       # fail, it will be retried, and should exist on next retry.
 			else
