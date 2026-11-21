@@ -34,14 +34,19 @@ function post_build_image__900_convert_to_abl_img() {
 	old_rootfs_image_uuid=$(blkid -s UUID -o value "${old_image_loop_device}p1")
 	mount "${old_image_loop_device}p1" "${old_rootfs_image_mount_dir}"
 	mount "${ROOTFS_IMAGE_FILE}" "${new_rootfs_image_mount_dir}"
-	cp -rfp "${old_rootfs_image_mount_dir}"/* "${new_rootfs_image_mount_dir}"/
+	run_host_command_logged cp -a "${old_rootfs_image_mount_dir}/." "${new_rootfs_image_mount_dir}/"
 	umount "${old_rootfs_image_mount_dir}"
 	losetup -d "${old_image_loop_device}"
 	rm "${DESTIMG}/${version}.img"
 	display_alert "Replace root partition uuid from ${old_rootfs_image_uuid} to ${new_rootfs_image_uuid} in /etc/fstab" "${EXTENSION}" "info"
 	sed -i "s|${old_rootfs_image_uuid}|${new_rootfs_image_uuid}|g" "${new_rootfs_image_mount_dir}/etc/fstab"
 	source "${new_rootfs_image_mount_dir}/boot/armbianEnv.txt"
-	declare -g bootimg_cmdline="${BOOTIMG_CMDLINE_EXTRA} root=UUID=${new_rootfs_image_uuid} slot_suffix=${abl_boot_partition_label#boot} ${extraargs}"
+	declare effective_slot_suffix="${ABL_CMDLINE_SLOT_SUFFIX:-${abl_cmdline_slot_suffix:-${abl_boot_partition_label#boot}}}"
+	declare -g bootimg_cmdline="${BOOTIMG_CMDLINE_EXTRA} root=UUID=${new_rootfs_image_uuid} slot_suffix=${effective_slot_suffix} ${extraargs}"
+	declare -a mkbootimg_extra_args=()
+	if [[ -n "${ABL_HEADER_VERSION:-}" ]]; then
+		mkbootimg_extra_args+=("--header_version" "${ABL_HEADER_VERSION}")
+	fi
 
 	if [[ ${#ABL_DTB_LIST[@]} -ne 0 ]]; then
 		display_alert "Going to create abl kernel boot image" "${EXTENSION}" "info"
@@ -59,6 +64,7 @@ function post_build_image__900_convert_to_abl_img() {
 				--ramdisk_offset 0x1000000 \
 				--tags_offset 0x100 \
 				--pagesize 4096 \
+				"${mkbootimg_extra_args[@]}" \
 				-o "${DESTIMG}/${version}.boot_${dtb_name}.img"
 		done
 		display_alert "Creatng abl kernel boot recovery image with dtb ${ABL_DTB_LIST[0]}" "${EXTENSION}" "info"
@@ -71,6 +77,7 @@ function post_build_image__900_convert_to_abl_img() {
 			--ramdisk_offset 0x1000000 \
 			--tags_offset 0x100 \
 			--pagesize 4096 \
+			"${mkbootimg_extra_args[@]}" \
 			-o "${DESTIMG}/${version}.boot_recovery.img"
 	fi
 
