@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Armbian Contributors <build@armbian.com>
+Date: Tue, 17 Nov 2026 09:17:00 +0000
+Subject: [PATCH] dt-bindings: arm: qcom: Add Baidu H845C
+
+Register qcom,sdm845-h845c under the qcom,sdm845 compatible enum so
+CHECK_DTBS=y schema validation covers the H845C board compatible.
+---
+ Documentation/devicetree/bindings/arm/qcom.yaml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/arm/qcom.yaml b/Documentation/devicetree/bindings/arm/qcom.yaml
+index 111111111111..222222222222 100644
+--- a/Documentation/devicetree/bindings/arm/qcom.yaml
++++ b/Documentation/devicetree/bindings/arm/qcom.yaml
+@@ -898,6 +898,7 @@ properties:
+               - lg,judyp
+               - oneplus,enchilada
+               - oneplus,fajita
++              - qcom,sdm845-h845c
+               - qcom,sdm845-mtp
+               - shift,axolotl
+               - samsung,starqltechn
+-- 
+2.43.0

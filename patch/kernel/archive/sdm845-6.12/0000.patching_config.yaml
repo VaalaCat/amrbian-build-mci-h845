@@ -1,0 +1,13 @@
+config: # This is file 'patch/kernel/archive/sdm845-6.12/0000.patching_config.yaml'
+
+  name: sdm845-6.12
+  kind: kernel
+  type: mainline
+  branch: linux-6.12.y
+  last-known-good-tag: v6.12.110
+
+  dts-directories:
+    - { source: "dt", target: "arch/arm64/boot/dts/qcom" }
+
+  auto-patch-dt-makefile:
+    - { directory: "arch/arm64/boot/dts/qcom", config-var: "CONFIG_ARCH_QCOM" }
